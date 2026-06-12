@@ -3,11 +3,17 @@ import { useAuth } from "../auth/AuthContext";
 
 export default function Topbar() {
   const { user, logout } = useAuth();
+  const today = new Date().toLocaleDateString("es-CR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-sidebar px-6">
       <div className="flex items-center gap-3">
-        <span className="text-sm text-white/70">jueves 11 de junio de 2026</span>
+        <span className="text-sm text-white/70">{today}</span>
         <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-muted">
           Moneda base: USD
         </span>
