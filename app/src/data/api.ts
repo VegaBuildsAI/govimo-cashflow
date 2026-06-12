@@ -46,3 +46,38 @@ export async function fetchModelMetrics(): Promise<ApiModelMetric[]> {
   if (!res.ok) throw new Error(`API /metrics respondió ${res.status}`);
   return (await res.json()).metrics;
 }
+
+export interface ApiForecastRun {
+  id: number;
+  modelo: Modelo;
+  fecha_corte: string;
+  horizonte_sem: number;
+  notas: string | null;
+  creado_en: string;
+}
+
+export interface ApiPrediction {
+  id: number;
+  transaction_id: string | null;
+  moneda: string;
+  pred_fecha: string;
+  pred_monto: number;
+  pred_monto_base: number | null;
+  contraparte: string | null;
+  categoria: string | null;
+  fecha_real: string | null;
+  monto_real: number | null;
+  error_dias: number | null;
+  error_monto: number | null;
+}
+
+export interface ForecastResponse {
+  run: ApiForecastRun | null;
+  predictions: ApiPrediction[];
+}
+
+export async function fetchForecast(modelo?: Modelo): Promise<ForecastResponse> {
+  const res = await fetch(`/api/forecast${modelo ? `?modelo=${modelo}` : ""}`);
+  if (!res.ok) throw new Error(`API /forecast respondió ${res.status}`);
+  return res.json();
+}

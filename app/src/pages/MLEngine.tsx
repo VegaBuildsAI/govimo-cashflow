@@ -12,7 +12,13 @@ import {
   type LogChannel,
   type LogLine,
 } from "../data/brain";
-import { fetchModelMetrics, type ApiModelMetric, type Modelo } from "../data/api";
+import {
+  fetchForecast,
+  fetchModelMetrics,
+  type ApiForecastRun,
+  type ApiModelMetric,
+  type Modelo,
+} from "../data/api";
 import { Card } from "../components/ui";
 
 const MODELO_LABEL: Record<Modelo, string> = {
@@ -70,12 +76,42 @@ export default function MLEngine() {
   const [mem, setMem] = useState<number[]>(() => Array.from({ length: 40 }, () => 470 + Math.random() * 40));
   const [uptime, setUptime] = useState(4 * 3600 + 12 * 60 + 37);
   const [realMetrics, setRealMetrics] = useState<ApiModelMetric[] | null>(null);
+  const [realRun, setRealRun] = useState<ApiForecastRun | null>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchModelMetrics()
       .then(setRealMetrics)
       .catch(() => setRealMetrics(null));
+    // Última corrida del motor (k-NN sobre la memoria vectorial pgvector):
+    // sus predicciones reales se inyectan a la consola, marcadas [real].
+    fetchForecast("ml")
+      .then(({ run, predictions }) => {
+        if (!run) return;
+        setRealRun(run);
+        const ts = new Date(run.creado_en).toLocaleTimeString("es-CR", { hour12: false });
+        const realLines: LogLine[] = predictions.slice(0, 14).map((p, i) => ({
+          id: -(i + 2),
+          ts,
+          channel: "predict",
+          level: p.error_dias !== null ? "ok" : "info",
+          text:
+            `[real] ${p.contraparte ?? p.transaction_id} · ${p.moneda} ${p.pred_monto.toLocaleString("en-US")}` +
+            ` → fecha probable ${p.pred_fecha}` +
+            (p.error_dias !== null ? ` · medido: err ${p.error_dias}d` : " · pendiente de conciliar"),
+        }));
+        const header: LogLine = {
+          id: -1,
+          ts,
+          channel: "sys",
+          level: "ok",
+          text: `[real] corrida #${run.id} modelo=${run.modelo} · corte ${run.fecha_corte} · horizonte ${run.horizonte_sem} sem · memoria vectorial pgvector`,
+        };
+        // ids negativos = líneas reales; filtra previas para ser idempotente
+        // ante el doble montaje de StrictMode.
+        setLogs((xs) => [header, ...realLines, ...xs.filter((l) => l.id >= 0)]);
+      })
+      .catch(() => setRealRun(null));
   }, []);
 
   useEffect(() => {
@@ -281,7 +317,7 @@ export default function MLEngine() {
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-border bg-sidebar px-4 py-2.5">
           <span className="flex items-center gap-2 font-mono text-xs text-white/85">
             <TerminalSquare size={14} className="text-brand" />
-            govimo/brain-engine:0.4-sim
+            {realRun ? `govimo/brain-engine:0.5 · corrida #${realRun.id} (${realRun.modelo})` : "govimo/brain-engine:0.4-sim"}
           </span>
           <span className="rounded-full border border-emerald-500/40 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase text-emerald-400">
             running

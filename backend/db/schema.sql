@@ -109,3 +109,17 @@ CREATE TABLE IF NOT EXISTS model_metrics (
 );
 
 CREATE INDEX IF NOT EXISTS idx_metrics_modelo_periodo ON model_metrics (modelo, periodo_desde);
+
+-- ── Memoria vectorial (Fase 4 · Nivel 3) — pgvector ─────────────────────────────
+-- Cada movimiento se proyecta a un embedding determinístico de rasgos
+-- (contraparte, categoría, moneda, escala de monto, calendario, tipo). El modelo
+-- 'ml' predice por vecinos más cercanos: el retraso probable de un pendiente =
+-- mediana del retraso real de los k conciliados más parecidos (db/vector.py).
+-- Requiere la imagen pgvector/pgvector:pg16 en el contenedor govimo-postgres.
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS movement_embeddings (
+    transaction_id  text PRIMARY KEY REFERENCES transactions(id) ON DELETE CASCADE,
+    embedding       public.vector(16) NOT NULL,
+    actualizado_en  timestamptz NOT NULL DEFAULT now()
+);

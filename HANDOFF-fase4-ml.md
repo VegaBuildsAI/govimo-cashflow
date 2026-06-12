@@ -21,6 +21,7 @@ La **línea base de reglas no requiere entrenar nada**: las reglas asumen pago e
 
 ```powershell
 # Postgres del proyecto: Docker, contenedor govimo-postgres, 127.0.0.1:5434, db/user govimo
+# Imagen: pgvector/pgvector:pg16 — la memoria vectorial (db/vector.py) requiere la extensión vector
 docker start govimo-postgres   # si no está arriba
 
 # Suite completa (núcleo + repo e2e + API + learning)
@@ -34,7 +35,7 @@ Los tests con DB se **saltan con mensaje** si el contenedor no está arriba (no 
 
 > Nota: en el sandbox de Cowork (Linux) estos e2e no corren — no alcanza el Docker del host ni trae psycopg. Aquí solo se validó import limpio, DDL Postgres válido (sqlglot) y lógica de error. La verificación real con DB es en el host.
 
-## Qué sigue (orden sugerido)
+## Qué sigue (orden sugerido) — 1–3 HECHOS (ver PLAN.md Fase 4); el k-NN vectorial de `db/vector.py` cubre un primer Nivel 3
 
 1. **Motor de predicción Nivel 2 (estadística)** detrás de la misma interfaz que `forecast.py`: por contraparte/categoría, estimar `pred_fecha` (p. ej. mediana de retraso histórico `fecha_real − fecha_esperada`) y `pred_monto`. Cada corrida → `record_forecast_run(modelo="estadistica", …)`.
 2. **Loop de evaluación**: tras cada ingesta, `reconcile_outcomes()` + `compute_metrics()` por modelo y periodo. Persistir en `model_metrics`.

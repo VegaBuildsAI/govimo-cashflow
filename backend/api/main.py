@@ -10,7 +10,7 @@ import psycopg
 from fastapi import Depends, FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from db import learning, predict, repo
+from db import learning, predict, repo, vector
 from govimo_cashflow.ingest import parse_transactions_csv
 
 app = FastAPI(title="Govimo Cashflow API", version="0.1.0")
@@ -122,17 +122,23 @@ async def ingest_file(file: UploadFile, conn: psycopg.Connection = Depends(get_c
         count = repo.upsert_transactions(conn, transactions, raw_ref=file.filename)
     except (ValueError, UnicodeDecodeError) as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    # Loop de aprendizaje: nueva corrida estadística sobre lo pendiente,
-    # auto-medición de lo conciliado y métricas por modelo (Fase 4).
+    # Loop de aprendizaje: corrida estadística + corrida k-NN (memoria vectorial)
+    # sobre lo pendiente, auto-medición de lo conciliado y métricas por modelo.
     today = date.today()
-    forecast = predict.run_statistical_forecast(conn, fecha_corte=today, notas=f"post-ingesta {file.filename}")
+    notas = f"post-ingesta {file.filename}"
+    estadistica = predict.run_statistical_forecast(conn, fecha_corte=today, notas=notas)
+    knn = vector.run_knn_forecast(conn, fecha_corte=today, notas=notas)
     evaluation = learning.evaluate_models(conn, hasta=today)
     conn.commit()
     return {
         "ingested": count,
         "file": file.filename,
-        "forecast_run": forecast["run_id"],
-        "predicciones": forecast["n_predicciones"],
+        "forecast_runs": {"estadistica": estadistica["run_id"], "ml": knn["run_id"]},
+        "predicciones": {
+            "estadistica": estadistica["n_predicciones"],
+            "ml": knn["n_predicciones"],
+        },
+        "embeddings_indexados": knn["n_indexados"],
         "outcomes_nuevos": evaluation["outcomes_nuevos"],
         "metricas": _plain(evaluation["metricas"]),
     }

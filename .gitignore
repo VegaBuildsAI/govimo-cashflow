@@ -17,3 +17,4 @@ backend/tests/**/__pycache__/
 # Large media / build artifacts not for GitHub
 UI Demo.mp4
 *.mp4
+backup-govimo-pre-pgvector.sql

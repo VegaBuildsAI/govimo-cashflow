@@ -219,12 +219,16 @@ class Fase4ApiTests(_SchemaCase):
         self.assertEqual(res.status_code, 200)
         body = res.json()
         self.assertGreater(body["ingested"], 0)
-        self.assertIsInstance(body["forecast_run"], int)
+        self.assertIsInstance(body["forecast_runs"]["estadistica"], int)
+        self.assertIsInstance(body["forecast_runs"]["ml"], int)
+        self.assertGreater(body["embeddings_indexados"], 0)
         self.assertIn("outcomes_nuevos", body)
         self.assertIn("metricas", body)
-        # La corrida quedó registrada como modelo estadístico.
-        run = self.conn.execute("SELECT modelo FROM forecast_runs").fetchone()
-        self.assertEqual(run["modelo"], "estadistica")
+        # Quedaron registradas ambas corridas (estadística + memoria vectorial).
+        modelos = {
+            r["modelo"] for r in self.conn.execute("SELECT modelo FROM forecast_runs")
+        }
+        self.assertEqual(modelos, {"estadistica", "ml"})
 
 
 if __name__ == "__main__":
