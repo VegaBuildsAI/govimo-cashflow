@@ -19,8 +19,15 @@ Fuentes: 3 docx (plan/arquitectura/SOW) + repo-actas (UX). Moneda base de report
 - [x] Núcleo backend testeable creado en `backend/govimo_cashflow`: ingesta CSV canónica, consolidación FX, forecast semanal, detección de faltantes y verificación de cobertura de pago. Pruebas: `PYTHONPATH=backend python -m unittest discover backend/tests -v`.
 - [ ] (Post-mock, con cliente) Mapa de fuentes, modelo de datos validado, KPIs v1 de Felipe.
 
-## Fase 1 · Cimientos (sem 3–6)
-Backend FastAPI + PostgreSQL sobre el núcleo `backend/govimo_cashflow`, modelo canónico de transacción (id/fuente, tipo, estado, monto/moneda, fx_tasa/fecha, monto_base, fechas, contraparte, categoría), ingesta por archivos reales (Excel/CSV Federico, estados de cuenta) + NetSuite (SuiteTalk/SuiteQL o CSV plan B), tabla FX histórica. Listo: posición de caja real consolidada multimoneda en la app.
+## Fase 1 · Cimientos — HECHO (infra local, a falta de datos reales)
+- [x] PostgreSQL 16 en Docker: contenedor `govimo-postgres`, puerto 127.0.0.1:5434, db/user `govimo` (5432/5433 ocupados por otros proyectos).
+- [x] Schema canónico (`backend/db/schema.sql`): `transactions` (modelo del docx + raw_ref para auditabilidad), `fx_rates` histórica, `accounts` (saldo a fecha de corte), `currency_settings` (mínimos por moneda).
+- [x] Repo psycopg (`backend/db/repo.py`): upsert idempotente, resolución FX por fecha (monto_base USD), posición = corte + conciliados posteriores; weekDelta = neto 7 días.
+- [x] API FastAPI (`backend/api/main.py`): `POST /ingest/file` (CSV canónico, plan B NetSuite), `GET /positions|/transactions|/fx|/health`. Arranque: `$env:PYTHONPATH='backend'; python -m uvicorn api.main:app --port 8000`.
+- [x] Fixtures + `backend/scripts/seed.py` (carga por el pipeline de ingesta; posición resultante = la del mock para continuidad visual).
+- [x] Dashboard consume `/positions` vía `app/src/data/api.ts` + proxy Vite `/api`; tag "datos en vivo · corte"; fallback visible "API no disponible" → mock. Forecast/Calendario/Alertas siguen con mock (Fases 2–3).
+- [x] Tests 13/13 (núcleo + repo e2e en schema temporal con rollback + API TestClient; skip con mensaje si la DB no está).
+- [ ] (Con cliente) Archivos reales de Federico/estados de cuenta → parsers por banco; NetSuite SuiteTalk/SuiteQL; confirmar moneda base USD.
 
 ## Fase 2 · Proyección (sem 6–9)
 Motor de reglas determinístico: posición actual + cobros/pagos conocidos por fecha esperada + recurrentes (nómina, alquileres, impuestos). Forecast 13 semanas real en dashboard. Listo: forecast se actualiza con cada carga de datos.

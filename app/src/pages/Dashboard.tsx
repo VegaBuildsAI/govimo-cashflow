@@ -1,4 +1,5 @@
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, ChevronRight, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, ChevronRight, Clock, WifiOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import {
@@ -7,11 +8,12 @@ import {
   KPIS,
   MOVEMENTS,
   POSITIONS,
+  RATES_TO_USD,
   consolidatedUSD,
   fmtMoney,
   forecastConsolidatedUSD,
-  toUSD,
 } from "../data/mock";
+import { fetchPositions, type PositionsResponse } from "../data/api";
 import { Card, ImpactBadge } from "../components/ui";
 
 const sparkData = FORECAST.map((w) => ({
@@ -25,17 +27,43 @@ const upcoming = [...MOVEMENTS]
   .slice(0, 5);
 
 export default function Dashboard() {
+  const [live, setLive] = useState<PositionsResponse | null>(null);
+  const [apiError, setApiError] = useState(false);
+
+  useEffect(() => {
+    fetchPositions()
+      .then(setLive)
+      .catch(() => setApiError(true));
+  }, []);
+
+  const positions = live?.positions ?? POSITIONS;
+  const consolidated = live?.consolidatedUSD ?? consolidatedUSD;
+  const toBase = (amount: number, currency: keyof typeof RATES_TO_USD) =>
+    amount * (live?.rates[currency] ?? RATES_TO_USD[currency]);
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-white">Posición de caja</h2>
         <p className="text-sm text-muted">
           Consolidada y por moneda · fuentes: NetSuite, banco/SINPE, WhatsApp, archivos
+          {live && <span className="text-emerald-400/80"> · datos en vivo · corte {live.asOf}</span>}
         </p>
       </div>
 
       {/* Banners */}
       <div className="space-y-2">
+        {apiError && (
+          <div className="flex items-start gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3.5">
+            <WifiOff size={20} className="mt-0.5 shrink-0 text-muted" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-white/80">API no disponible</p>
+              <p className="mt-0.5 text-xs text-muted">
+                Mostrando datos de demostración. Inicie el backend (uvicorn :8000) para ver la posición real.
+              </p>
+            </div>
+          </div>
+        )}
         <Link
           to="/alertas"
           className="flex items-start gap-3 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3.5 transition-colors hover:bg-red-500/15"
@@ -76,27 +104,27 @@ export default function Dashboard() {
               Caja consolidada (USD)
             </p>
             <p className="mt-1 font-heading text-3xl font-bold tracking-tight text-white">
-              ${Math.round(consolidatedUSD).toLocaleString("en-US")}
+              ${Math.round(consolidated).toLocaleString("en-US")}
             </p>
             <div className="mt-3 flex h-2 w-72 overflow-hidden rounded-full">
-              {POSITIONS.map((p) => (
+              {positions.map((p) => (
                 <div
                   key={p.currency}
                   style={{
-                    width: `${(toUSD(p.balance, p.currency) / consolidatedUSD) * 100}%`,
+                    width: `${(toBase(p.balance, p.currency) / consolidated) * 100}%`,
                     backgroundColor: CURRENCY_META[p.currency].color,
                   }}
                 />
               ))}
             </div>
             <div className="mt-2 flex gap-4">
-              {POSITIONS.map((p) => (
+              {positions.map((p) => (
                 <span key={p.currency} className="flex items-center gap-1.5 text-[11px] text-muted">
                   <span
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: CURRENCY_META[p.currency].color }}
                   />
-                  {p.currency} {Math.round((toUSD(p.balance, p.currency) / consolidatedUSD) * 100)}%
+                  {p.currency} {Math.round((toBase(p.balance, p.currency) / consolidated) * 100)}%
                 </span>
               ))}
             </div>
@@ -126,7 +154,7 @@ export default function Dashboard() {
 
       {/* Posición por moneda */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {POSITIONS.map((p) => {
+        {positions.map((p) => {
           const meta = CURRENCY_META[p.currency];
           const up = p.weekDelta >= 0;
           return (
@@ -150,7 +178,7 @@ export default function Dashboard() {
                 {p.currency} · {meta.name}
               </p>
               <p className="mt-1 text-[11px] text-muted">
-                ≈ ${Math.round(toUSD(p.balance, p.currency)).toLocaleString("en-US")} · {p.accounts.join(" · ")}
+                ≈ ${Math.round(toBase(p.balance, p.currency)).toLocaleString("en-US")} · {p.accounts.join(" · ")}
               </p>
             </Card>
           );

@@ -1,0 +1,11 @@
+id,source,type,status,amount,currency,expected_date,counterparty,category
+ns-ap-1042,NetSuite,pago,programado,600000,CNY,2026-07-23,Shenzhen Huaray Tech,inventario
+ns-ap-1043,NetSuite,pago,programado,38500,USD,2026-06-19,Maersk Línea,logistica
+ns-ap-1044,NetSuite,pago,esperado,21500000,CRC,2026-06-30,Hacienda CR,impuestos
+ns-ap-1045,NetSuite,pago,programado,310000,MXN,2026-06-25,Arrendadora Polanco,alquiler
+ns-ar-2087,NetSuite,cobro,esperado,580000,MXN,2026-06-06,Grupo Lumen MX,ventas
+ns-ar-2088,NetSuite,cobro,confirmado,96000,USD,2026-06-24,Nortec USA Inc,ventas
+ns-ar-2089,NetSuite,cobro,esperado,820000,CNY,2026-07-08,Guangzhou Mercantil,ventas
+ns-ar-2090,NetSuite,cobro,esperado,34000000,CRC,2026-06-26,Corporación Delta CR,ventas
+wa-fede-0611,WhatsApp,cobro,provisional,12500,USD,2026-06-17,Cliente reportado por Federico,ventas
+arc-fede-0610,Archivo,pago,esperado,9800,USD,2026-06-20,Seguros INS,seguros

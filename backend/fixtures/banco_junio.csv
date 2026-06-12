@@ -1,0 +1,9 @@
+id,source,type,status,amount,currency,expected_date,counterparty,category
+bco-2026-0601,Banco,pago,conciliado,42000,CRC,2026-06-02,CNFL,servicios
+bco-2026-0602,Banco,cobro,conciliado,42000,CRC,2026-06-03,Distribuidora Zeta CR,ventas
+bnk-cny-0609,Banco,pago,conciliado,86000,CNY,2026-06-09,Shenzhen Huaray Tech,anticipo-proveedor
+bnk-usd-0608,Banco,cobro,conciliado,45200,USD,2026-06-08,Nortec USA Inc,ventas
+bnk-usd-0610,Banco,pago,conciliado,14000,USD,2026-06-10,DHL Logística,logistica
+bnk-mxn-0609,Banco,cobro,conciliado,118000,MXN,2026-06-09,Grupo Lumen MX,ventas
+bnk-crc-0610,Banco,pago,conciliado,14900000,CRC,2026-06-10,Planilla Govimo CR,nomina
+snp-crc-0611,SINPE,cobro,conciliado,2500000,CRC,2026-06-11,Ferretería El Norte,ventas
