@@ -1,0 +1,189 @@
+
+AXIO
+Cliente final: Govimo (Vimo)   ·   Partner: Cosmic   ·   Builder: AXIO
+Documento 2 de 3
+Arquitectura Técnica
+Diseño del sistema: ingesta de datos, modelo canónico, motor de predicción ML y alertas
+Herramienta predictiva de flujo de caja
+Versión 0.1 — borrador para revisión interna
+11 de junio de 2026
+Preparado por: Michael Vega — AXIO Creator
+Contenido
+TOC \h \o "1-2"1. Resumen PAGEREF _Toc232108302 \h 3
+Principios de diseño PAGEREF _Toc232108303 \h 3
+2. Vista lógica de la arquitectura PAGEREF _Toc232108304 \h 3
+3. Capa de ingesta de datos PAGEREF _Toc232108305 \h 4
+3.1 NetSuite (API) PAGEREF _Toc232108306 \h 4
+3.2 Banco y SINPE PAGEREF _Toc232108307 \h 4
+3.3 WhatsApp PAGEREF _Toc232108308 \h 4
+3.4 Archivos de Federico PAGEREF _Toc232108309 \h 5
+4. Modelo de datos canónico PAGEREF _Toc232108310 \h 5
+5. Multimoneda y tipos de cambio PAGEREF _Toc232108311 \h 5
+6. Motor de inteligencia (predicción) PAGEREF _Toc232108312 \h 6
+Nivel 1 — Reglas y calendario (Fase 2) PAGEREF _Toc232108313 \h 6
+Nivel 2 — Estadística PAGEREF _Toc232108314 \h 6
+Nivel 3 — Machine Learning (Fase 4) PAGEREF _Toc232108315 \h 6
+7. Motor de alertas y señales PAGEREF _Toc232108316 \h 6
+8. Dashboard PAGEREF _Toc232108317 \h 7
+9. Stack tecnológico propuesto PAGEREF _Toc232108318 \h 8
+10. Seguridad y cumplimiento PAGEREF _Toc232108319 \h 8
+11. Madurez técnica por fase PAGEREF _Toc232108320 \h 8
+1. Resumen
+Se propone una aplicación web independiente (standalone) que actúa como capa de tesorería sobre NetSuite, sin reemplazarlo. La app ingiere datos de cuatro tipos de fuente, los normaliza en un modelo de datos canónico multimoneda, calcula la posición y la proyección de caja, ejecuta modelos de predicción y dispara alertas por WhatsApp, email y dashboard.
+Principios de diseño
+Fuente de verdad externa: NetSuite y el banco mandan; la app consolida y predice, no contabiliza.
+Ingesta desacoplada: cada fuente entra por un conector aislado; agregar o cambiar una no rompe las demás.
+Modelo canónico único: toda transacción, venga de donde venga, se normaliza al mismo esquema.
+Multimoneda nativa: la moneda y su tipo de cambio son atributos de primera clase, no un parche.
+Predicción evolutiva: reglas → estadística → ML, con la misma interfaz, para no rehacer el sistema al madurar.
+Humano en el ciclo: los datos informales se validan antes de afectar decisiones.
+2. Vista lógica de la arquitectura
+Cinco capas, de la fuente al usuario.
+Figura 1. Arquitectura de capas — de la fuente al usuario.
+Capa
+Qué hace
+Componentes
+1 · Conectores
+Trae datos de cada fuente
+NetSuite, Banco/SINPE, WhatsApp, Archivos de Federico
+2 · Ingesta &amp; normalización
+Limpia, valida y mapea al modelo canónico
+Validadores, parsers, motor FX, cola de revisión
+3 · Núcleo de datos
+Almacena la verdad consolidada
+Base de datos transaccional + histórico
+4 · Inteligencia
+Calcula posición, proyección y predicción
+Motor de reglas, motor de forecast, modelos ML
+5 · Entrega
+Muestra y avisa
+Dashboard, motor de alertas (WhatsApp/email)
+Flujo de extremo a extremo: Fuente → Conector → Validación/FX → Modelo canónico → Motor de proyección/ML → Dashboard + Alertas. Cada paso es auditable: siempre se puede rastrear una cifra del dashboard hasta la transacción y la fuente que la originó.
+3. Capa de ingesta de datos
+3.1 NetSuite (API)
+Fuente primaria de cuentas por pagar y por cobrar, facturas y pagos. Integración mediante los servicios web de NetSuite — SuiteTalk REST y consultas SuiteQL, o RESTlets a la medida cuando se requiera lógica específica. Se sincroniza de forma incremental (solo cambios desde la última corrida) para eficiencia.
+Entrada: facturas emitidas/recibidas, pagos programados y aplicados, saldos por cuenta, moneda del documento.
+Frecuencia: diaria automatizada (configurable a varias veces al día).
+Plan B fase 1: si el acceso API se demora, se arranca con exportaciones (CSV) de NetSuite por el mismo pipeline de archivos.
+3.2 Banco y SINPE
+Movimientos reales de efectivo entrante y saliente. En Costa Rica, el sistema relevante es SINPE (Sistema Nacional de Pagos Electrónicos del BCCR) e incluye SINPE Móvil. Nota: en el pizarrón aparece como “SIMPE”; confirmamos que el sistema es SINPE. 
+Fase 1: carga de estados de cuenta en CSV/PDF; parser por banco con validación de saldos.
+Fase posterior: evaluar conexión automática (API del banco / agregador) según disponibilidad.
+Conciliación: cruce de movimientos bancarios contra pagos/cobros de NetSuite para detectar diferencias.
+3.3 WhatsApp
+Canal para capturar movimientos de efectivo informales que aún no están en NetSuite ni en el banco (p. ej. un cobro en efectivo reportado por un colaborador). Se implementa con la API de WhatsApp Business (vía Twilio), con un formato estructurado o comandos guiados para que el mensaje se convierta en una transacción provisional.
+Todo movimiento por WhatsApp entra como “provisional” y pasa por una cola de revisión humana antes de afectar la proyección en firme.
+El mismo canal sirve de salida para las alertas (ver sección 7).
+3.4 Archivos de Federico
+El “flujo de Federico” del pizarrón: las hojas de cálculo con las que hoy se administra la caja. Son la fuente más valiosa para arrancar porque ya contienen la lógica del negocio. Se ingieren por carga de archivos (Excel/CSV) con un mapeo de columnas configurable.
+Doble propósito: alimentan el sistema hoy y sirven de “verdad de referencia” para validar que la app reproduce el flujo actual antes de confiar en ella.
+4. Modelo de datos canónico
+Toda fuente se normaliza a un esquema común. La entidad central es la transacción de caja (real o esperada).
+Campo
+Descripción
+id / fuente
+Identificador único y origen (NetSuite, banco, WhatsApp, archivo).
+tipo
+Cobro, pago o entrada de efectivo.
+estado
+Esperado, programado, confirmado, conciliado, provisional.
+monto / moneda
+Importe en su moneda original (Yuan, USD, MXN, CRC).
+fx_tasa / fx_fecha
+Tipo de cambio aplicado y su fecha/fuente.
+monto_base
+Importe convertido a la moneda base de reporte.
+fecha_esperada / real
+Cuándo se espera y cuándo ocurrió el movimiento.
+contraparte
+Cliente o proveedor; enlace a NetSuite cuando exista.
+categoría
+Clasificación para análisis y para el ML.
+Por qué importa el modelo canónico
+Sin un esquema único, cada fuente se analiza por separado y nunca se obtiene una posición de caja confiable. El modelo canónico es lo que permite sumar peras con peras: un pago en NetSuite, un débito en el banco y un cobro reportado por WhatsApp terminan siendo el mismo tipo de objeto comparable.
+5. Multimoneda y tipos de cambio
+Cada transacción guarda su moneda original; nada se “aplana” prematuramente.
+Una moneda base de reporte (a definir con Govimo — probablemente USD o CRC) para consolidar.
+Tabla de tipos de cambio con histórico por fecha y fuente; se conserva la tasa usada en cada conversión.
+El dashboard permite ver la caja por moneda y consolidada, y el forecast señala exposición cambiaria por moneda.
+El ML puede aprender patrones específicos por moneda (p. ej. estacionalidad de cobros en Yuan vs. CRC).
+6. Motor de inteligencia (predicción)
+La predicción madura en tres niveles, todos detrás de la misma interfaz para no rehacer el sistema.
+Nivel 1 — Reglas y calendario (Fase 2)
+Proyección determinística a 13 semanas: parte de la posición actual y aplica los cobros y pagos conocidos según su fecha esperada, más patrones recurrentes simples (nómina, alquileres, impuestos). Da valor inmediato y crea la línea base.
+Nivel 2 — Estadística
+Para entradas/salidas no calendarizadas, métodos de series de tiempo (estacionalidad, tendencia, promedios móviles) que estiman montos y timing de partidas recurrentes pero variables.
+Nivel 3 — Machine Learning (Fase 4)
+Modelos que aprenden del histórico para predecir: (a) la fecha real probable de pago de cada cliente — quién paga tarde y cuánto; (b) montos esperados de partidas variables; (c) anomalías que merecen atención; (d) escenarios de flujo (optimista / base / conservador).
+Enfoque: modelos de gradient boosting / series de tiempo sobre datos tabulares, priorizando interpretabilidad — el usuario debe entender por qué se predice un faltante.
+Aprendizaje continuo: cada predicción se compara contra lo que realmente ocurrió; el error medido reentrena y mejora el modelo.
+Medición: el ML solo “gana” si supera a las reglas del Nivel 1 en métricas de error pre-acordadas.
+7. Motor de alertas y señales
+El corazón del pedido: “que mande señales cuando se acerca un pago importante y que verifique que el efectivo esté disponible”. El motor evalúa reglas sobre la proyección y dispara notificaciones.
+Señal
+Condición
+Canal
+Pago importante próximo
+Pago sobre umbral dentro de N días
+WhatsApp + email + dashboard
+Riesgo de faltante
+Proyección de caja bajo el mínimo en una moneda
+WhatsApp + email + dashboard
+Cobro atrasado
+Cliente excede su patrón histórico de pago
+Dashboard (digest)
+Anomalía
+Movimiento fuera de lo normal (vía ML)
+Dashboard + email
+Los umbrales (qué es “importante”, cuál es el mínimo de caja, cuántos días de anticipación) los configura Felipe.
+Cada alerta es accionable: dice el monto, la moneda, la fecha y si hay efectivo suficiente proyectado para cubrirla.
+Implementación de mensajería con la API de WhatsApp Business (Twilio) y email transaccional.
+Figura 2. Lógica del motor de alertas: verifica el efectivo por moneda antes de cada pago importante.
+8. Dashboard
+Posición de caja actual: por moneda y consolidada en moneda base.
+Forecast a 13 semanas: curva de caja con escenarios y puntos de faltante marcados.
+Calendario de pagos y cobros próximos, ordenado por impacto.
+Centro de alertas y cola de revisión de movimientos provisionales (WhatsApp/archivos).
+KPIs definidos por Felipe (p. ej. días de caja, exposición por moneda, precisión del pronóstico).
+9. Stack tecnológico propuesto
+Propuesta inicial sujeta a las preferencias de AXIO; la arquitectura no depende de una elección concreta.
+Componente
+Opción propuesta
+Por qué
+Backend / API
+Python (FastAPI)
+Ecosistema de datos y ML maduro; ideal para la capa predictiva.
+Base de datos
+PostgreSQL
+Robusta para transaccional + histórico; buen soporte de fechas y monedas.
+ML
+scikit-learn / gradient boosting + series de tiempo
+Interpretable y suficiente para datos tabulares de tesorería.
+Frontend
+React
+Dashboard interactivo y mantenible.
+Integraciones
+NetSuite SuiteTalk/SuiteQL · Twilio (WhatsApp/SMS) · parsers de archivos
+Cubre las cuatro fuentes y los canales de alerta.
+Infraestructura
+Nube (contenedores) + jobs programados
+Sincronización periódica y escalado simple.
+10. Seguridad y cumplimiento
+Datos financieros sensibles: cifrado en tránsito y en reposo; control de acceso por rol.
+Credenciales de NetSuite y del banco en un gestor de secretos, nunca en código.
+La herramienta es de solo lectura frente al dinero: informa y alerta, no ejecuta pagos ni transferencias.
+Trazabilidad completa: toda cifra es rastreable hasta su transacción y fuente (auditoría).
+Respaldos y retención del histórico, base del valor predictivo.
+11. Madurez técnica por fase
+Fase
+Capacidad técnica que se habilita
+1 · Cimientos
+Conectores por archivo + NetSuite, modelo canónico, posición consolidada multimoneda.
+2 · Proyección
+Motor de reglas, forecast 13 semanas, dashboard base.
+3 · Alertas
+Motor de señales + integración WhatsApp/email.
+4 · Inteligencia
+Modelos ML, aprendizaje continuo, escenarios y anomalías.
+Posterior
+Integraciones API en tiempo real (banco), más fuentes, refinamiento de modelos.

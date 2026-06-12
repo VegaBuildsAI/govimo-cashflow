@@ -1,0 +1,154 @@
+
+AXIO
+Cliente final: Govimo (Vimo)   ·   Partner: Cosmic   ·   Builder: AXIO
+Documento 1 de 3
+Plan de Proyecto
+Discovery, fases, roles y cronograma para la herramienta predictiva de flujo de caja
+Herramienta predictiva de flujo de caja
+Versión 0.1 — borrador para revisión interna
+11 de junio de 2026
+Preparado por: Michael Vega — AXIO Creator
+Contenido
+TOC \h \o "1-2"1. Contexto y objetivo PAGEREF _Toc232108887 \h 3
+Visión del producto PAGEREF _Toc232108888 \h 3
+Resultados esperados del negocio PAGEREF _Toc232108889 \h 3
+2. Alcance PAGEREF _Toc232108890 \h 3
+Dentro del alcance PAGEREF _Toc232108891 \h 3
+Fuera del alcance (fase 1) PAGEREF _Toc232108892 \h 4
+3. Enfoque por fases PAGEREF _Toc232108893 \h 4
+4. Roles y responsabilidades PAGEREF _Toc232108894 \h 4
+5. Cronograma indicativo PAGEREF _Toc232108895 \h 5
+6. Riesgos y mitigaciones PAGEREF _Toc232108896 \h 5
+7. Criterios de éxito PAGEREF _Toc232108897 \h 6
+8. Próximos pasos PAGEREF _Toc232108898 \h 6
+1. Contexto y objetivo
+AXIO —práctica de builders en IA dirigida por Michael Vega— construye para Govimo (Vimo), consultora de transformación digital y partner de Oracle NetSuite y Odoo, el cliente final, una herramienta predictiva de flujo de caja. Cosmic —startup studio de Felipe Castro— entra como partner estratégico entre AXIO y Vimo: aporta red, narrativa y la definición de KPIs. La operación a la que sirve la herramienta usa NetSuite como ERP y maneja múltiples monedas (Yuan, USD, MXN y CRC), lo que hace de la visibilidad de caja un problema crítico y difícil de resolver con reportería estática.
+El objetivo del proyecto es construir una aplicación independiente que consolide pagos, cobros y entradas de efectivo desde NetSuite, estados de cuenta bancarios, SINPE y reportes informales (WhatsApp / archivos de Federico); anticipe la posición de caja; emita señales tempranas cuando se aproxime un pago importante verificando que el efectivo esté disponible; y use machine learning para aprender de los datos históricos y predecir movimientos estratégicos de flujo de caja.
+Visión del producto
+En una frase
+Un copiloto de tesorería que le dice a Cosmic, con días o semanas de anticipación, cuánto efectivo tendrá en cada moneda, qué pagos vienen y si habrá faltante — antes de que sea un problema.
+Resultados esperados del negocio
+Visibilidad consolidada de la caja multimoneda en un solo lugar, en lugar de hojas dispersas.
+Reducción de sorpresas de liquidez: alertas accionables antes de cada pago relevante.
+Mejores decisiones de timing (cuándo pagar, cuándo convertir divisas, cuándo cobrar).
+Una base de datos limpia que, con el tiempo, alimenta predicciones cada vez más precisas.
+2. Alcance
+Dentro del alcance
+Ingesta de datos desde NetSuite (cuentas por pagar/cobrar, facturas, pagos).
+Ingesta de movimientos bancarios y SINPE vía archivos (CSV/PDF) en la primera fase.
+Captura de movimientos informales reportados por WhatsApp y archivos de Federico.
+Modelo de datos canónico multimoneda con tipos de cambio (Yuan, USD, MXN, CRC).
+Proyección de flujo de caja a 13 semanas (y diario a corto plazo).
+Motor de alertas: pagos próximos y verificación de disponibilidad de efectivo, vía WhatsApp/email y en el dashboard.
+Modelo de ML para predicción de entradas/salidas y detección de patrones.
+Dashboard web con KPIs definidos por Felipe.
+Fuera del alcance (fase 1)
+Ejecución de pagos o transferencias reales (la herramienta informa y alerta; no mueve dinero).
+Sustitución de la contabilidad o del ERP NetSuite.
+Conciliación contable formal / cierre fiscal.
+Integración bancaria vía API en tiempo real (se evalúa para fase posterior según disponibilidad del banco).
+Principio rector
+Arrancamos con las fuentes de datos que ya existen (archivos y exportaciones) para entregar valor rápido, y profundizamos hacia integraciones automáticas conforme se prueba el valor. “Dato disponible hoy” le gana a “integración perfecta el próximo trimestre”.
+3. Enfoque por fases
+Cinco fases incrementales. Cada una deja algo usable en manos de Cosmic y reduce el riesgo de la siguiente.
+Fase
+Nombre
+Foco principal
+Entregable clave
+0
+Discovery
+Entender datos, procesos y “flujo de Federico”
+Mapa de fuentes + modelo de datos validado
+1
+Cimientos
+App standalone + ingesta por archivos + modelo canónico
+Posición de caja consolidada y multimoneda
+2
+Proyección
+Proyección 13 semanas basada en reglas + calendario de pagos
+Forecast de caja navegable en dashboard
+3
+Alertas
+Motor de señales (pago próximo + faltante) WhatsApp/email
+Alertas accionables en producción
+4
+Inteligencia (ML)
+Modelos que aprenden de la historia y predicen movimientos
+Predicciones ML con medición de precisión
+Nota de secuencia: la proyección por reglas (Fase 2) entra antes del ML (Fase 4) a propósito. Da valor inmediato, genera la data limpia y etiquetada que el ML necesita, y se convierte en la línea base contra la cual mediremos si el modelo realmente mejora las predicciones.
+4. Roles y responsabilidades
+Quién
+Rol
+Responsabilidad principal
+AXIO — Michael Vega
+Builder
+Arquitectura, desarrollo, integración, ML, despliegue y soporte de la herramienta.
+Cosmic — Felipe Castro
+Partner estratégico
+Conecta a AXIO con Vimo; aporta red y narrativa; propone los KPIs y umbrales de alerta.
+Govimo (Vimo)
+Cliente final
+Dueño del proyecto; experticia NetSuite, accesos, gestión del cambio y adopción.
+Federico
+Datos / flujo
+Dueño del “flujo” y de los archivos fuente; valida lógica de pagos y cobros.
+Decisiones que dependen del cliente para arrancar
+Felipe (Cosmic): lista priorizada de KPIs y umbrales de alerta (qué es un “pago importante”).
+Federico: acceso a los archivos actuales de flujo y explicación de cómo se arman hoy.
+Govimo/TI: credenciales o exportaciones de NetSuite y formato de los estados de cuenta del banco.
+5. Cronograma indicativo
+Estimación inicial sujeta a ajuste tras Discovery. Asume dedicación parcial del lado del cliente para validaciones.
+Fase
+Duración aprox.
+Hito de salida
+0 · Discovery
+Semanas 1–2
+Modelo de datos y fuentes aprobados; KPIs v1 de Felipe
+1 · Cimientos
+Semanas 3–6
+Posición de caja multimoneda consolidada en la app
+2 · Proyección
+Semanas 6–9
+Forecast 13 semanas en dashboard piloto
+3 · Alertas
+Semanas 9–12
+Alertas WhatsApp/email activas con usuarios reales
+4 · Inteligencia (ML)
+Semanas 12–18
+Modelo ML en producción + reporte de precisión
+Los rangos se solapan deliberadamente: el equipo no espera a “terminar” una fase para empezar a preparar la siguiente. El cronograma firme con fechas se fija en el SOW (Documento 3) una vez confirmado el alcance.
+6. Riesgos y mitigaciones
+Riesgo
+Impacto
+Mitigación
+Calidad / dispersión de los datos fuente
+Alto
+Discovery dedicado; capa de validación; empezar por archivos conocidos.
+Acceso a NetSuite demorado
+Medio
+Arrancar con exportaciones manuales; integrar API en paralelo.
+Datos informales (WhatsApp) inconsistentes
+Medio
+Formato estructurado de captura + revisión humana antes de confiar en ellos.
+Histórico insuficiente para ML
+Medio
+Reglas primero; ML cuando haya datos; medir contra la línea base.
+Volatilidad de tipos de cambio
+Medio
+FX como dato de primera clase, con fuente y fecha por transacción.
+Adopción del usuario
+Alto
+Govimo lidera gestión del cambio; alertas en los canales que ya usan (WhatsApp).
+7. Criterios de éxito
+La herramienta consolida en un solo lugar la caja en las cuatro monedas, reconciliada con NetSuite.
+El forecast a 13 semanas está disponible y se actualiza con cada carga de datos.
+Las alertas de pago próximo llegan con anticipación suficiente para actuar, por WhatsApp/email.
+El modelo ML supera de forma medible a la proyección por reglas en precisión de predicción.
+Govimo (o la operación servida) toma al menos una decisión de tesorería al mes apoyada en la herramienta.
+Los KPIs cuantitativos exactos (horizonte de anticipación, error de pronóstico objetivo, etc.) los define Felipe en Discovery y se fijan como metas medibles.
+8. Próximos pasos
+Validar este plan con Govimo y Cosmic; confirmar fases y prioridades.
+Agendar las sesiones de Discovery con Federico (datos) y Felipe (KPIs).
+Solicitar accesos/exportaciones de NetSuite y muestras de estados de cuenta.
+Aprobar la arquitectura técnica (Documento 2).
+Firmar el SOW y fijar fechas en firme (Documento 3).

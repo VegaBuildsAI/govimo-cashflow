@@ -1,0 +1,15 @@
+.claude/
+app/node_modules/
+app/dist/
+app/tsconfig.tsbuildinfo
+repo-actas-solidaristas/
+__pycache__/
+**/__pycache__/
+backend/.pytest_cache/
+backend/__pycache__/
+backend/src/**/__pycache__/
+backend/tests/**/__pycache__/
+.env
+.env.*
+!/.env.example
+~$*.docx

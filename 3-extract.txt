@@ -1,0 +1,156 @@
+
+AXIO
+Cliente final: Govimo (Vimo)   ·   Partner: Cosmic   ·   Builder: AXIO
+Documento 3 de 3
+Propuesta y Alcance de Trabajo
+Entregables, supuestos, modelo de ROI e inversión para la herramienta predictiva de flujo de caja
+Herramienta predictiva de flujo de caja
+Versión 0.1 — borrador para revisión interna
+11 de junio de 2026
+Preparado por: Michael Vega — AXIO Creator
+Contenido
+TOC \h \o "1-2"1. Resumen ejecutivo PAGEREF _Toc232108730 \h 3
+2. Entendimiento del negocio PAGEREF _Toc232108731 \h 3
+3. Alcance de servicios y entregables PAGEREF _Toc232108732 \h 3
+4. Supuestos y exclusiones PAGEREF _Toc232108733 \h 4
+Supuestos PAGEREF _Toc232108734 \h 4
+Exclusiones (fase 1) PAGEREF _Toc232108735 \h 4
+5. Modelo de ROI PAGEREF _Toc232108736 \h 4
+6. Estructura de inversión PAGEREF _Toc232108737 \h 4
+7. Cronograma y términos PAGEREF _Toc232108738 \h 5
+8. Equipo PAGEREF _Toc232108739 \h 5
+9. Aceptación PAGEREF _Toc232108740 \h 5
+1. Resumen ejecutivo
+AXIO —práctica de builders en IA dirigida por Michael Vega— propone diseñar y construir una herramienta predictiva de flujo de caja para Govimo (Vimo), el cliente final: una aplicación independiente que consolida pagos, cobros y entradas de efectivo desde NetSuite, banca/SINPE, WhatsApp y los archivos de operación actuales; proyecta la caja multimoneda; alerta antes de cada pago importante verificando la disponibilidad de efectivo; y aplica machine learning para anticipar movimientos estratégicos de flujo de caja. Cosmic —startup studio de Felipe Castro— participa como partner estratégico entre AXIO y Vimo.
+La propuesta se entrega en cinco fases incrementales, de modo que Cosmic recibe valor utilizable desde las primeras semanas y decide continuar con base en resultados, no en promesas.
+2. Entendimiento del negocio
+La operación maneja múltiples monedas (Yuan, USD, MXN, CRC), lo que dificulta una visión única y confiable de la caja.
+La información de flujo vive hoy en archivos y procesos manuales (el “flujo de Federico”), separada del ERP NetSuite.
+Las decisiones de tesorería se toman de forma reactiva, con riesgo de sorpresas de liquidez.
+Existe la oportunidad de anticiparse con datos: ver el faltante antes de que ocurra y actuar a tiempo.
+3. Alcance de servicios y entregables
+Entregables agrupados por fase. Cada fase es un punto natural de revisión y decisión.
+Fase
+Servicios
+Entregables
+0 · Discovery
+Levantamiento de fuentes, procesos y KPIs
+Mapa de fuentes de datos
+Modelo de datos validado
+KPIs v1 (Felipe)
+1 · Cimientos
+App standalone, conectores, modelo canónico
+Ingesta NetSuite + archivos
+Posición de caja multimoneda
+2 · Proyección
+Motor de reglas y forecast
+Forecast 13 semanas
+Dashboard piloto
+3 · Alertas
+Motor de señales + mensajería
+Alertas WhatsApp/email
+Centro de alertas en dashboard
+4 · Inteligencia
+Modelos ML y aprendizaje continuo
+Predicciones ML
+Reporte de precisión vs. línea base
+4. Supuestos y exclusiones
+Supuestos
+Cosmic provee accesos/exportaciones de NetSuite, estados de cuenta y los archivos de flujo en tiempo razonable.
+Felipe entrega los KPIs y umbrales; Federico explica y valida la lógica del flujo actual.
+Disponibilidad del equipo del cliente para sesiones de validación en cada fase.
+Existe histórico suficiente para entrenar ML; de lo contrario, la Fase 4 se reprograma sin bloquear el resto.
+Exclusiones (fase 1)
+Ejecución de pagos o transferencias reales.
+Conciliación contable formal o cierre fiscal.
+Integración bancaria por API en tiempo real (se evalúa en fase posterior).
+Cambios dentro de NetSuite o de la contabilidad del cliente.
+5. Modelo de ROI
+Felipe (Cosmic) propondrá los KPIs y, con ellos, montaremos la proyección de ROI — conectando el valor de la herramienta con Federico (operación) y con Govimo (cliente final). El retorno se mide en cuatro frentes:
+Palanca de valor
+Cómo genera retorno
+Indicador
+Evitar faltantes
+Menos costos por financiamiento de emergencia o pagos tardíos
+# de faltantes anticipados / evitados
+Mejor timing de FX
+Convertir y pagar en mejores momentos entre monedas
+Ahorro estimado por decisiones de cambio
+Tiempo del equipo
+Menos horas armando flujo manual en hojas
+Horas/mes liberadas
+Decisiones proactivas
+Acción temprana ante pagos y cobros
+Decisiones de tesorería apoyadas/mes
+Nota sobre cifras de ROI
+Las cifras concretas de retorno se calculan en Discovery con datos reales de Cosmic y los KPIs de Felipe. Esta sección define el marco de medición; no sustituye una proyección financiera, que se construirá conjuntamente.
+6. Estructura de inversión
+Marco de inversión por fases. Los montos en firme se acuerdan con AXIO y Govimo tras Discovery.
+Fase
+Modalidad sugerida
+Inversión
+0 · Discovery
+Precio fijo (corto, acotado)
+[A definir]
+1 · Cimientos
+Precio fijo por entregable
+[A definir]
+2 · Proyección
+Precio fijo por entregable
+[A definir]
+3 · Alertas
+Precio fijo por entregable
+[A definir]
+4 · Inteligencia
+Tiempo y materiales (depende de datos)
+[A definir]
+Soporte / mejora continua
+Retainer mensual
+[A definir]
+Recomendación de estructura: Discovery a precio fijo y bajo, como puerta de entrada de bajo riesgo; fases 1–3 a precio fijo por entregable (alcance claro); fase 4 de ML por tiempo y materiales, porque su esfuerzo depende de la calidad y cantidad de datos; y un retainer mensual para soporte, monitoreo de modelos y mejora continua una vez en producción.
+Las tarifas las define AXIO con el cliente (Govimo); este documento no propone montos.
+7. Cronograma y términos
+Duración total estimada: ~18 semanas hasta ML en producción (ver Documento 1 para el detalle por fase).
+Cada fase cierra con una revisión formal y la decisión de avanzar.
+Cambios de alcance se gestionan por solicitud de cambio acordada entre las partes.
+Propiedad intelectual del software entregado: a definir en el contrato marco entre AXIO, Govimo y Cosmic.
+8. Equipo
+Rol
+Parte
+Responsabilidad
+Líder de proyecto / arquitecto
+AXIO · Michael Vega
+Diseño técnico, integración y entrega.
+Desarrollo &amp; ML
+AXIO
+Construcción de la app, conectores y modelos.
+Partner estratégico / KPIs
+Cosmic · Felipe Castro
+Conexión, narrativa, definición de KPIs y umbrales.
+Consultoría de negocio / ERP
+Govimo (Vimo)
+NetSuite, gestión del cambio, adopción.
+Datos y flujo
+Federico
+Fuente y validación del flujo de caja.
+Patrocinador / cliente final
+Govimo (Vimo)
+Accesos, prioridades y decisión de ROI.
+9. Aceptación
+La firma de este documento autoriza el inicio de la Fase 0 (Discovery) y la planificación en firme de las fases siguientes, conforme al alcance aquí descrito.
+Por Govimo (Vimo) · Cliente
+Por AXIO · Builder
+Por Cosmic · Partner
+Nombre:
+Cargo:
+Firma:
+Fecha:
+Nombre:
+Cargo:
+Firma:
+Fecha:
+Nombre:
+Cargo:
+Firma:
+Fecha:
+Documento preliminar para alineación. No constituye oferta vinculante hasta la firma del contrato marco.
