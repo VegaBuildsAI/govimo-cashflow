@@ -10,7 +10,7 @@ import psycopg
 from fastapi import Depends, FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from db import repo
+from db import learning, predict, repo
 from govimo_cashflow.ingest import parse_transactions_csv
 
 app = FastAPI(title="Govimo Cashflow API", version="0.1.0")
@@ -73,6 +73,47 @@ def get_fx(conn: psycopg.Connection = Depends(get_conn)):
     return {"baseCurrency": repo.BASE_CURRENCY, "rates": _plain(repo.latest_rates(conn))}
 
 
+@app.get("/metrics")
+def get_metrics(conn: psycopg.Connection = Depends(get_conn)):
+    """Último model_metrics por modelo — la evidencia de si supera la línea base."""
+    rows = conn.execute(
+        """
+        SELECT DISTINCT ON (modelo) *
+        FROM model_metrics ORDER BY modelo, creado_en DESC
+        """
+    ).fetchall()
+    return {"metrics": _plain(rows)}
+
+
+@app.get("/forecast")
+def get_forecast(modelo: str | None = None, conn: psycopg.Connection = Depends(get_conn)):
+    """Predicciones de la última corrida (opcionalmente filtrada por modelo)."""
+    if modelo is not None and modelo not in ("reglas", "estadistica", "ml"):
+        raise HTTPException(status_code=422, detail="modelo debe ser reglas|estadistica|ml")
+    query = "SELECT * FROM forecast_runs"
+    params: dict = {}
+    if modelo:
+        query += " WHERE modelo = %(modelo)s"
+        params["modelo"] = modelo
+    query += " ORDER BY creado_en DESC, id DESC LIMIT 1"
+    run = conn.execute(query, params).fetchone()
+    if run is None:
+        return {"run": None, "predictions": []}
+    predictions = conn.execute(
+        """
+        SELECT p.id, p.transaction_id, p.moneda, p.pred_fecha, p.pred_monto,
+               p.pred_monto_base, p.contraparte, p.categoria,
+               o.fecha_real, o.monto_real, o.error_dias, o.error_monto
+        FROM forecast_predictions p
+        LEFT JOIN prediction_outcomes o ON o.prediction_id = p.id
+        WHERE p.run_id = %s
+        ORDER BY p.pred_fecha, p.id
+        """,
+        (run["id"],),
+    ).fetchall()
+    return {"run": _plain(run), "predictions": _plain(predictions)}
+
+
 @app.post("/ingest/file")
 async def ingest_file(file: UploadFile, conn: psycopg.Connection = Depends(get_conn)):
     try:
@@ -81,5 +122,17 @@ async def ingest_file(file: UploadFile, conn: psycopg.Connection = Depends(get_c
         count = repo.upsert_transactions(conn, transactions, raw_ref=file.filename)
     except (ValueError, UnicodeDecodeError) as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+    # Loop de aprendizaje: nueva corrida estadística sobre lo pendiente,
+    # auto-medición de lo conciliado y métricas por modelo (Fase 4).
+    today = date.today()
+    forecast = predict.run_statistical_forecast(conn, fecha_corte=today, notas=f"post-ingesta {file.filename}")
+    evaluation = learning.evaluate_models(conn, hasta=today)
     conn.commit()
-    return {"ingested": count, "file": file.filename}
+    return {
+        "ingested": count,
+        "file": file.filename,
+        "forecast_run": forecast["run_id"],
+        "predicciones": forecast["n_predicciones"],
+        "outcomes_nuevos": evaluation["outcomes_nuevos"],
+        "metricas": _plain(evaluation["metricas"]),
+    }

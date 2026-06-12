@@ -12,7 +12,14 @@ import {
   type LogChannel,
   type LogLine,
 } from "../data/brain";
+import { fetchModelMetrics, type ApiModelMetric, type Modelo } from "../data/api";
 import { Card } from "../components/ui";
+
+const MODELO_LABEL: Record<Modelo, string> = {
+  reglas: "Reglas (línea base)",
+  estadistica: "Estadística · Nivel 2",
+  ml: "ML · Nivel 3",
+};
 
 const CHANNEL_STYLES: Record<LogChannel, string> = {
   ingesta: "text-sky-300/80",
@@ -62,7 +69,14 @@ export default function MLEngine() {
   const [cpu, setCpu] = useState<number[]>(() => Array.from({ length: 40 }, () => 24 + Math.random() * 14));
   const [mem, setMem] = useState<number[]>(() => Array.from({ length: 40 }, () => 470 + Math.random() * 40));
   const [uptime, setUptime] = useState(4 * 3600 + 12 * 60 + 37);
+  const [realMetrics, setRealMetrics] = useState<ApiModelMetric[] | null>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchModelMetrics()
+      .then(setRealMetrics)
+      .catch(() => setRealMetrics(null));
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -104,9 +118,15 @@ export default function MLEngine() {
             <span className="rounded-full border border-brand/40 bg-brand-tint px-2.5 py-0.5 font-mono text-[10px] font-medium tracking-wider text-[#A79DF5]">
               BRAIN v0.4
             </span>
-            <span className="rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-muted">
-              simulación · el modelo real llega en Fase 4
-            </span>
+            {realMetrics && realMetrics.length > 0 ? (
+              <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                medición real conectada · paneles inferiores simulados
+              </span>
+            ) : (
+              <span className="rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-muted">
+                simulación · sin corridas medidas aún (Fase 4)
+              </span>
+            )}
           </h2>
           <p className="text-sm text-muted">
             Rendimiento del modelo, KPIs y actividad del motor en tiempo real
@@ -120,6 +140,55 @@ export default function MLEngine() {
           EN LÍNEA
         </span>
       </div>
+
+      {/* Medición real: model_metrics vía GET /metrics (Fase 4) */}
+      {realMetrics && realMetrics.length > 0 && (
+        <div>
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-white">Medición real · predicción vs realidad</h3>
+            <p className="text-xs text-muted">
+              Último corte por modelo desde la capa de aprendizaje · el modelo solo gana si su MAE supera a las reglas
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {realMetrics.map((m) => (
+              <Card key={m.modelo} className="relative overflow-hidden p-4">
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/70 to-transparent" />
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                    {MODELO_LABEL[m.modelo]}
+                  </p>
+                  {m.supera_baseline !== null && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        m.supera_baseline
+                          ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                          : "border border-amber-500/40 bg-amber-500/10 text-amber-400"
+                      }`}
+                    >
+                      {m.supera_baseline ? "supera línea base" : "no supera línea base"}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1.5 flex items-baseline gap-2">
+                  <p className="font-heading text-2xl font-bold tracking-tight text-white">
+                    {m.mae_dias !== null ? `${m.mae_dias.toFixed(1)} días` : "—"}
+                  </p>
+                  <span className="text-xs text-muted">MAE fecha</span>
+                </div>
+                <p className="mt-0.5 text-[11px] text-muted">
+                  reglas: {m.baseline_mae_dias !== null ? `${m.baseline_mae_dias.toFixed(1)} días` : "—"}
+                  {" · "}
+                  {m.n_predicciones} predicciones medidas
+                </p>
+                <p className="mt-0.5 text-[11px] text-muted">
+                  periodo {m.periodo_desde} → {m.periodo_hasta}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Rendimientos del modelo */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -44,3 +44,68 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 CREATE INDEX IF NOT EXISTS idx_transactions_moneda_fecha ON transactions (moneda, fecha_esperada);
 CREATE INDEX IF NOT EXISTS idx_transactions_estado ON transactions (estado);
+
+-- ── Capa de aprendizaje (Fase 4) — predicción vs. realidad, base del ROI ────────
+-- Cierra el loop: cada corrida del motor guarda lo que predijo; al conciliarse el
+-- movimiento se mide el error; las métricas agregadas prueban si un modelo supera
+-- a la línea base de reglas. La línea base siempre existe: las reglas asumen pago
+-- en fecha_esperada, así que su error = fecha_real − fecha_esperada (ya en
+-- transactions). Ver "2 - Arquitectura Técnica" §6 (Motor de inteligencia).
+
+-- Una corrida del motor: el estado del mundo (fecha_corte) y qué modelo predijo.
+CREATE TABLE IF NOT EXISTS forecast_runs (
+    id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    modelo          text NOT NULL CHECK (modelo IN ('reglas', 'estadistica', 'ml')),
+    fecha_corte     date NOT NULL,
+    horizonte_sem   int  NOT NULL CHECK (horizonte_sem > 0),
+    notas           text,
+    creado_en       timestamptz NOT NULL DEFAULT now()
+);
+
+-- Lo que el modelo creyó que pasaría con cada movimiento (fecha y monto probables).
+-- transaction_id es nullable: el modelo puede predecir algo aún no registrado.
+CREATE TABLE IF NOT EXISTS forecast_predictions (
+    id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    run_id          bigint NOT NULL REFERENCES forecast_runs(id) ON DELETE CASCADE,
+    transaction_id  text REFERENCES transactions(id) ON DELETE SET NULL,
+    moneda          text NOT NULL CHECK (moneda IN ('CNY', 'USD', 'MXN', 'CRC')),
+    pred_fecha      date NOT NULL,
+    pred_monto      numeric(18, 2) NOT NULL CHECK (pred_monto >= 0),
+    pred_monto_base numeric(18, 2),
+    contraparte     text,
+    categoria       text,
+    creado_en       timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pred_run ON forecast_predictions (run_id);
+CREATE INDEX IF NOT EXISTS idx_pred_tx ON forecast_predictions (transaction_id);
+
+-- La realidad, una vez conciliado el movimiento: el error medido por predicción.
+-- error_dias = fecha_real − pred_fecha (+ = pagó más tarde de lo predicho).
+CREATE TABLE IF NOT EXISTS prediction_outcomes (
+    prediction_id    bigint PRIMARY KEY REFERENCES forecast_predictions(id) ON DELETE CASCADE,
+    fecha_real       date NOT NULL,
+    monto_real       numeric(18, 2) NOT NULL CHECK (monto_real >= 0),
+    error_dias       int NOT NULL,
+    error_monto      numeric(18, 2) NOT NULL,
+    error_monto_base numeric(18, 2),
+    medido_en        timestamptz NOT NULL DEFAULT now()
+);
+
+-- Error agregado por modelo y periodo, contra la línea base de reglas.
+-- supera_baseline = el modelo solo "gana" si su MAE en días < el de las reglas.
+CREATE TABLE IF NOT EXISTS model_metrics (
+    id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    modelo            text NOT NULL CHECK (modelo IN ('reglas', 'estadistica', 'ml')),
+    periodo_desde     date NOT NULL,
+    periodo_hasta     date NOT NULL,
+    n_predicciones    int  NOT NULL CHECK (n_predicciones >= 0),
+    mae_dias          numeric(10, 2),
+    sesgo_dias        numeric(10, 2),
+    mae_monto_base    numeric(18, 2),
+    baseline_mae_dias numeric(10, 2),
+    supera_baseline   boolean,
+    creado_en         timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_metrics_modelo_periodo ON model_metrics (modelo, periodo_desde);

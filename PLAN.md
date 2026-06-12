@@ -37,6 +37,7 @@ Motor de señales sobre la proyección: pago importante próximo (umbral + N dí
 
 ## Fase 4 · Inteligencia ML (sem 12–18)
 - [x] (Adelanto visual) Página **ML Engine (Brain)** en la app bajo Alertas: rendimientos del modelo vs línea base, KPIs en vivo y consola estilo contenedor con feed simulado (`app/src/pages/MLEngine.tsx` + `app/src/data/brain.ts`). Todo simulación etiquetada; el modelo real es de esta fase.
+- [x] **Capa de aprendizaje (esquema + repo + tests)** — cierra el loop predicción→realidad→error→ROI. `schema.sql`: `forecast_runs` (corrida del motor), `forecast_predictions` (lo predicho por tx), `prediction_outcomes` (error medido al conciliar), `model_metrics` (MAE días/monto vs línea base; `supera_baseline`). Repo `db/learning.py`: `record_forecast_run`, `record_outcome`, `reconcile_outcomes` (auto-mide desde tx conciliadas — "aprende de la data que se va guardando"), `compute_metrics`. Línea base = `fecha_real − fecha_esperada` (intrínseca a `transactions`). Tests `tests/test_learning.py` (schema temporal `_test_fase4`, rollback). **Falta:** los modelos que generan las predicciones (gradient boosting / series de tiempo) y conectar el feed real a esta capa.
 Gradient boosting / series de tiempo sobre tabular: fecha real de pago por cliente, montos variables, anomalías, escenarios. Misma interfaz que el motor de reglas; solo gana si supera la línea base en error pre-acordado. Listo: ML en producción + reporte de precisión.
 
 ## Notas
