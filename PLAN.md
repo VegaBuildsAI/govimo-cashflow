@@ -36,6 +36,7 @@ Motor de reglas determinístico: posición actual + cobros/pagos conocidos por f
 Motor de señales sobre la proyección: pago importante próximo (umbral + N días), riesgo de faltante por moneda, cobro atrasado. Umbrales configurables (Felipe). Canales: WhatsApp (Twilio) + email + dashboard. Cola de revisión de movimientos provisionales (WhatsApp/archivos). Listo: alertas accionables con usuarios reales.
 
 ## Fase 4 · Inteligencia ML (sem 12–18)
+- [x] (Adelanto visual) Página **ML Engine (Brain)** en la app bajo Alertas: rendimientos del modelo vs línea base, KPIs en vivo y consola estilo contenedor con feed simulado (`app/src/pages/MLEngine.tsx` + `app/src/data/brain.ts`). Todo simulación etiquetada; el modelo real es de esta fase.
 Gradient boosting / series de tiempo sobre tabular: fecha real de pago por cliente, montos variables, anomalías, escenarios. Misma interfaz que el motor de reglas; solo gana si supera la línea base en error pre-acordado. Listo: ML en producción + reporte de precisión.
 
 ## Notas

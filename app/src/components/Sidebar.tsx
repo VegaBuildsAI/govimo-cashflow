@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, LayoutDashboard, TrendingUp } from "lucide-react";
+import { Bell, BrainCircuit, CalendarDays, LayoutDashboard, TrendingUp } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { ALERTS } from "../data/mock";
 
@@ -7,6 +7,7 @@ const NAV = [
   { to: "/forecast", icon: TrendingUp, label: "Forecast 13 semanas" },
   { to: "/calendario", icon: CalendarDays, label: "Calendario" },
   { to: "/alertas", icon: Bell, label: "Alertas" },
+  { to: "/ml-engine", icon: BrainCircuit, label: "ML Engine" },
 ];
 
 const urgentCount = ALERTS.filter(
