@@ -14,6 +14,14 @@ npm.cmd run preview
 
 La app corre por defecto en `http://localhost:5180`.
 
+Usuarios demo:
+
+- `Michael`
+- `Felipe`
+- `Federico`
+
+Password comun: `govimo2026`
+
 ## Backend Core
 
 ```powershell

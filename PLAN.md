@@ -15,6 +15,7 @@ Fuentes: 3 docx (plan/arquitectura/SOW) + repo-actas (UX). Moneda base de report
 - [x] Baseline local inicializado con Git y `.gitignore`; `node_modules`, `dist`, cache TS y temporales Office quedan fuera.
 - [x] Scripts frontend fijados: `dev`, `typecheck`, `build`, `preview`.
 - [x] `vite.config.js` usado para evitar fallos de build por transpile de config TS en el sandbox.
+- [x] Login demo agregado: usuarios `Michael`, `Felipe`, `Federico`; password comun `govimo2026`; rutas protegidas con sesion local.
 - [x] Núcleo backend testeable creado en `backend/govimo_cashflow`: ingesta CSV canónica, consolidación FX, forecast semanal, detección de faltantes y verificación de cobertura de pago. Pruebas: `PYTHONPATH=backend python -m unittest discover backend/tests -v`.
 - [ ] (Post-mock, con cliente) Mapa de fuentes, modelo de datos validado, KPIs v1 de Felipe.
 
